@@ -1,0 +1,17 @@
+{
+    "name": "milanzor/cake-pack",
+    "description": "Webpack using Cake Console (Cake 2)",
+    "type": "cakephp-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Milan van As",
+            "email": "milanvanas@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "extra": {
+        "installer-name": "CakePack"
+    }
+}
