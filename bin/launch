@@ -1,0 +1,178 @@
+#!/usr/bin/env node
+
+// Get cli arguments
+const argv = require('minimist')(process.argv.slice(2));
+
+// Fs
+const fs = require('fs');
+
+// Path
+const path = require('path');
+
+if (!fs.existsSync('./node_modules')) {
+    console.log('It looks like my Node dependencies are not installed yet, please run `yarn install` or `npm install` in ' + path.resolve(__dirname));
+    process.exit(1);
+}
+
+if (!('watch' in argv) && !('build' in argv)) {
+    console.log('Please pass --watch or --build');
+    process.exit(1);
+}
+
+console.log('Initializing Webpack');
+
+// Get webpack
+const webpack = require('webpack');
+
+// Get Jarvis
+const Jarvis = require('webpack-jarvis');
+
+// Glob plugin
+const WebpackWatchedGlobEntries = require('webpack-watched-glob-entries-plugin');
+
+// Webpack config merge plugin
+const webpackMerge = require('webpack-merge');
+
+
+let usrConfig = {};
+
+// Get the config of the user
+try {
+    usrConfig = require(path.resolve(argv['webpack-config']));
+    console.log(`Merging config ${argv['webpack-config']}`);
+} catch (e) {
+}
+
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+// Initialize the extract plugin to extract css to a different file
+const extractPlugin = new ExtractTextPlugin({
+    filename: '[name].css'
+});
+
+
+const webpackMode = 'webpack-mode' in argv ? argv['webpack-mode'] : 'development';
+
+// Build the webpack config
+const webpackConfig = {
+    // Set mode
+    mode: webpackMode,
+
+    // Set devtool
+    devtool: webpackMode == 'development' ? 'eval-source-map' : 'source-map',
+
+    // Tell webpack we can find modules in the Vendor folder
+    resolve: {
+        modules: [path.resolve(argv['vendor-dir'], 'node_modules'), 'node_modules']
+    },
+
+    // Glob the View folders for any js files, they are our entries
+    entry: WebpackWatchedGlobEntries.getEntries(path.resolve(argv['entry-root'], '**', '*.js')),
+
+    // Our default output
+    output: {
+        filename: '[name].js',
+        path: path.resolve(argv['output-dir']),
+        chunkFilename: 'commons.js',
+        publicPath: '/',
+    },
+
+
+    plugins: [
+        new WebpackWatchedGlobEntries(),
+        new Jarvis({
+            host: '0.0.0.0',
+            port: 1337,
+        }),
+        extractPlugin
+    ],
+
+
+    // Module
+    module: {
+        rules: [
+
+            // SCSS rule
+            {
+                test: /\.scss$/,
+                loader: ExtractTextPlugin.extract({
+                    use: [
+                        "css-loader",
+                        "sass-loader",
+                    ]
+                })
+            },
+
+            // Babel rule
+            {
+                test: /\.js$/,
+                use: [
+                    "babel-loader",
+                ],
+
+            },
+
+            // Font rules
+            {
+                test: /\.(eot|svg|ttf|woff|woff2)$/,
+                use: {
+                    loader: "file-loader",
+                    options: {
+                        name: "fonts/[name].[ext]"
+                    }
+                },
+            }
+
+        ],
+    },
+    optimization: {
+        splitChunks: {
+            chunks: "all",
+            cacheGroups: {
+                commons: {
+                    name: "commons",
+                    chunks: "all",
+                    minChunks: 2,
+                    enforce: true
+                },
+            },
+        }
+    },
+};
+
+
+// Setup compile callback fn
+const compileCallback = function (err, stats) {
+    let hasErr = false;
+    if (err) {
+        console.log(err);
+        hasErr = true;
+    }
+    var jsonStats = stats.toJson();
+    if (jsonStats.errors.length > 0) {
+        console.log(jsonStats.errors);
+        hasErr = true;
+    }
+
+    if (jsonStats.warnings.length > 0) {
+        console.log(jsonStats.warnings);
+        hasErr = true;
+    }
+
+    if (hasErr) {
+        console.log('Compile error!');
+    }
+
+    return true;
+};
+
+
+// Build
+if (argv.build) {
+    webpack(webpackConfig).run(compileCallback);
+}
+
+// Watch
+if (argv.watch) {
+    webpack(webpackConfig).watch({poll: true}, compileCallback);
+}
