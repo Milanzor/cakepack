@@ -16,7 +16,7 @@ class LaunchShell extends Shell {
             'build' => $this->params['build'],
             'watch' => $this->params['watch'],
             'vendor-dir' => VENDORS,
-            'output-dir' => $this->params['output-dir'] ? $this->params['output-dir'] : WEBROOT_DIR . 'dist' . DS,
+            'output-dir' => $this->params['output-dir'] ? $this->params['output-dir'] : ROOT . DS . WEBROOT_DIR . 'dist' . DS,
             'entry-root' => $this->params['entry-root'] ? $this->params['entry-root'] : APP . 'View' . DS,
         ];
 

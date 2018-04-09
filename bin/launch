@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-// Get cli arguments
-const argv = require('minimist')(process.argv.slice(2));
-
 // Fs
 const fs = require('fs');
 
@@ -13,6 +10,9 @@ if (!fs.existsSync('./node_modules')) {
     console.log('It looks like my Node dependencies are not installed yet, please run `yarn install` or `npm install` in ' + path.resolve(__dirname));
     process.exit(1);
 }
+
+// Get cli arguments
+const argv = require('minimist')(process.argv.slice(2));
 
 if (!('watch' in argv) && !('build' in argv)) {
     console.log('Please pass --watch or --build');
