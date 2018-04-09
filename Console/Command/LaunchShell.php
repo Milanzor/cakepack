@@ -15,7 +15,7 @@ class LaunchShell extends Shell {
             'webpack-mode' => $this->params['webpack-mode'],
             'build' => $this->params['build'],
             'watch' => $this->params['watch'],
-            'vendor-dir' => VENDORS,
+            'vendor-dir' => $this->params['vendor-dir'] ? $this-params['vendor-dir'] : VENDORS,
             'output-dir' => $this->params['output-dir'] ? $this->params['output-dir'] : ROOT . DS . WEBROOT_DIR . 'dist' . DS,
             'entry-root' => $this->params['entry-root'] ? $this->params['entry-root'] : APP . 'View' . DS,
         ];
